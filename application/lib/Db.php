@@ -19,8 +19,10 @@ class Db {
 		catch (PDOException $e) {
             echo 'Подключение не удалось: ' . $e->getMessage();
         }
+        
 	}
 
+	
 	public function query($sql, $params = []) {
 		$stmt = $this->db->prepare($sql);
 		if (!empty($params)) {
@@ -33,10 +35,11 @@ class Db {
 				$stmt->bindValue(':'.$key, $val, $type);
 			}
 		}
+		
 		$stmt->execute();
 		return $stmt;
 	}
-
+	
 	public function row($sql, $params = []) {
 		$result = $this->query($sql, $params);
 		return $result->fetchAll(PDO::FETCH_ASSOC);

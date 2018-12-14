@@ -22,6 +22,11 @@ return [
 		'action' => 'recovery',
 	],
 	
+	'account/confirm/{token:\w+}' => [
+		'controller' => 'account',
+		'action' => 'confirm',
+	],
+	
 	
 	
 ];
