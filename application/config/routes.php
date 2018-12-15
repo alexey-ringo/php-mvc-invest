@@ -17,6 +17,11 @@ return [
 		'action' => 'register',
 	],
 	
+	'account/register/{ref:\w+}' => [
+		'controller' => 'account',
+		'action' => 'register',
+	],
+	
 	'account/recovery' => [
 		'controller' => 'account',
 		'action' => 'recovery',
