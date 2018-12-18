@@ -20,6 +20,10 @@ class Account extends Model {
 				'pattern' => '#^[a-z0-9]{3,15}$#',
 				'message' => 'Логин указан неверно (разрешены только латинские буквы и цифры от 3 до 15 символов',
 			],
+			'ref' => [
+				'pattern' => '#^[a-z0-9]{3,15}$#',
+				'message' => 'Логин пригласившего указан неверно',
+			],
 			'wallet' => [
 				'pattern' => '#^[A-z0-9]{3,15}$#',
 				'message' => 'Кошелек Perfect Money указан неверно',
@@ -36,6 +40,12 @@ class Account extends Model {
 				return false;
 	        }
 	    }
+	    
+	    if($post['login'] == $post['ref']) {
+	    	$this->error = 'Регистрация невозможна!';
+	    	return false;
+	    }
+	    
 	    return true;
 	}
 	
@@ -72,6 +82,12 @@ class Account extends Model {
 		$this->db->query('UPDATE accounts SET status = 1, token = "" WHERE token = :token', $params);
 	}
 	
+	public function checkRefExists() {
+		$params = [
+			'login' => $login,
+		];
+		return $this->db->column('SELECT id FROM accounts WHERE login = :login', $params);
+	}
 	
 	public function createToken() {
 		return substr(str_shuffle(str_repeat('0123456789abcdefghijklmnopqrstuvwxyz', 60)), 0, 60);
@@ -79,6 +95,15 @@ class Account extends Model {
 	
 	public function register($post) {
 		$token = $this->createToken();
+		if($post['ref'] == 'none') {
+			$ref = 0;
+		}
+		else {
+			$ref = $this->checkRefExists($post['ref']);
+			if(!$ref) {
+				$ref = 0;
+			}
+		}
 		
 		$params = [
 			'id' => NULL,
@@ -86,7 +111,7 @@ class Account extends Model {
 			'login' => $post['login'],
 			'wallet' => $post['wallet'],
 			'password' => password_hash($post['password'], PASSWORD_BCRYPT),
-			'ref' => 0,
+			'ref' => $ref,
 			'refBalance' => 0,
 			'token' => $token,
 			'status' => 0,
@@ -101,7 +126,7 @@ class Account extends Model {
 		$mail = new PHPMailer;
 		$mail->isSMTP();
 		$mail->Host = $config['host']; 
-		$mail->SMTPAuth = true; 
+		$mail->SMTPAuth = true;
 		$mail->Username = $config['username'];
 		$mail->Password = $config['password'];
 		$mail->SMTPSecure = $config['smtpSecure']; 

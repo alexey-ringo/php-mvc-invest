@@ -14,9 +14,10 @@ class AccountController extends Controller {
 		if(!empty($_POST)) {
 			
 			//Основная валидация полей формы регистрации
-			if(!$this->model->validate(['email', 'login', 'wallet', 'password'], $_POST)) {
+			if(!$this->model->validate(['email', 'login', 'wallet', 'password', 'ref'], $_POST)) {
 				$this->view->message('error', $this->model->error);
 			}
+			
 			//проверка email на уникальность в БД
 			elseif ($this->model->checkEmailExists($_POST['email'])) {
 				$this->view->message('error', 'Этот E-mail уже используется');
