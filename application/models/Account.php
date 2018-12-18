@@ -41,11 +41,12 @@ class Account extends Model {
 	        }
 	    }
 	    
-	    if($post['login'] == $post['ref']) {
-	    	$this->error = 'Регистрация невозможна!';
-	    	return false;
+	    if(isset($post['ref'])) {
+	    	if($post['login'] == $post['ref']) {
+	    		$this->error = 'Регистрация невозможна!';
+	    		return false;
+	    	}
 	    }
-	    
 	    return true;
 	}
 	
@@ -150,6 +151,53 @@ class Account extends Model {
 		
 	}
 	
+	public function checkData($login, $password) {
+		$params = [
+			'login' => $login,
+			];
+		$hash = $this->db->column('SELECT password FROM accounts WHERE login = :login', $params);
+		
+		if(!$hash or !password_verify($password, $hash)) {
+			$this->error = 'Логин или пароль указан неверно';
+			return false;
+		}
+		return true;
+	}
+	
+	public function checkStatus($type, $data) {
+		$params = [
+			$type => $data,
+		];
+		$status = $this->db->column('SELECT status FROM accounts WHERE ' . $type . ' = :' . $type, $params);
+		if($status != 1) {
+			$this->error = 'Аккаунт ожидает подтверждения по E-mail';
+			return false;
+		}
+		return true;
+	}
+	
+	public function login($login) {
+		$params = [
+			'login' => $login,
+		];
+		$data = $this->db->row('SELECT * FROM accounts WHERE login = :login', $params);
+		/*
+		Данные о пользователе, возвращаемые из БД, хранятся в нолевом ключе массива:
+		[0] => Array
+        (
+            [id] => 1
+            [email] => alexey.ringo@gmail.com
+            [login] => ringo
+            [wallet] => U7034466
+            [password] => $2y$10$u6DCRCobsNJeBEZEf6n3FeZHX2I73Xze4wQ17HsiOvK7AbC1BIIg2
+            [ref] => 0
+            [refBalance] => 0
+            [token] => 
+            [status] => 1
+        )
+		*/
+		$_SESSION['account'] = $data[0];
+	}
 	
 	
 }

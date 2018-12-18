@@ -32,6 +32,16 @@ return [
 		'action' => 'confirm',
 	],
 	
+	'account/profile' => [
+		'controller' => 'account',
+		'action' => 'profile',
+	],
+	
+	'account/logout' => [
+		'controller' => 'account',
+		'action' => 'logout',
+	],
+	
 	
 	
 ];
