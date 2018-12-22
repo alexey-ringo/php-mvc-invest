@@ -19,5 +19,8 @@
                 <button type="submit" class="btn btn-primary">Вход</button>
             </form>
         </div>
+        <div class="col-lg-8 mb-4">
+            <a href="/account/recovery">Сбросить пароль</a>
+        </div>
     </div>
 </div>

@@ -13,6 +13,7 @@ return [
 		'login',
 		'recovery',
 		'confirm',
+		'reset',
 	],
 	'admin' => [
 		//

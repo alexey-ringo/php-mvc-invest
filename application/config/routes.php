@@ -22,11 +22,6 @@ return [
 		'action' => 'register',
 	],
 	
-	'account/recovery' => [
-		'controller' => 'account',
-		'action' => 'recovery',
-	],
-	
 	'account/confirm/{token:\w+}' => [
 		'controller' => 'account',
 		'action' => 'confirm',
@@ -40,6 +35,14 @@ return [
 	'account/logout' => [
 		'controller' => 'account',
 		'action' => 'logout',
+	],
+	'account/recovery' => [
+		'controller' => 'account',
+		'action' => 'recovery',
+	],
+	'account/reset/{token:\w+}' => [
+		'controller' => 'account',
+		'action' => 'reset',
 	],
 	
 	

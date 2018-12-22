@@ -8,6 +8,15 @@ use application\lib\phpmailer\Exception;
 
 class Account extends Model {
     public $error;
+    
+    private $mailConfig;
+    
+	public function __construct() {
+        //Загрузка массива параметров из конфига PhpMailer
+        $this->mailConfig = require 'application/config/mail.php';
+        parent::__construct();
+       
+    }
    
     
 	public function validate($input, $post) {
@@ -94,8 +103,13 @@ class Account extends Model {
 		return substr(str_shuffle(str_repeat('0123456789abcdefghijklmnopqrstuvwxyz', 60)), 0, 60);
 	}
 	
+	public function createPassword() {
+		return substr(str_shuffle(str_repeat('0123456789abcdefghijklmnopqrstuvwxyz', 10)), 0, 10);
+	}
+	
 	public function register($post) {
 		$token = $this->createToken();
+		//Проверка корректности реферала
 		if($post['ref'] == 'none') {
 			$ref = 0;
 		}
@@ -122,17 +136,17 @@ class Account extends Model {
 			
 		
 		
-		$config = require 'application/config/mail.php';
+		//$config = require 'application/config/mail.php';
 		
 		$mail = new PHPMailer;
 		$mail->isSMTP();
-		$mail->Host = $config['host']; 
+		$mail->Host = $this->mailConfig['host']; 
 		$mail->SMTPAuth = true;
-		$mail->Username = $config['username'];
-		$mail->Password = $config['password'];
-		$mail->SMTPSecure = $config['smtpSecure']; 
-		$mail->Port = $config['port'];
-		$mail->setFrom($config['username']);
+		$mail->Username = $this->mailConfig['username'];
+		$mail->Password = $this->mailConfig['password'];
+		$mail->SMTPSecure = $this->mailConfig['smtpSecure']; 
+		$mail->Port = $this->mailConfig['port'];
+		$mail->setFrom($this->mailConfig['username']);
 		$mail->addAddress($post['email']);
 		
 		$mail->isHTML(true); 
@@ -182,7 +196,7 @@ class Account extends Model {
 		];
 		$data = $this->db->row('SELECT * FROM accounts WHERE login = :login', $params);
 		/*
-		Данные о пользователе, возвращаемые из БД, хранятся в нолевом ключе массива:
+		Данные о пользователе, возвращаемые из БД, хранятся в нолевом ключе массива $data:
 		[0] => Array
         (
             [id] => 1
@@ -199,5 +213,74 @@ class Account extends Model {
 		$_SESSION['account'] = $data[0];
 	}
 	
+	public function recovery($post) {
+		$token = $this->createToken();
+		
+		$params = [
+			'email' => $post['email'],
+			'token' => $token,
+		];
+		
+		$this->db->query('UPDATE accounts SET token = :token WHERE email = :email', $params);
+		
+		$config = require 'application/config/mail.php';
+		
+		$mail = new PHPMailer;
+		$mail->isSMTP();
+		$mail->Host = $this->mailConfig['host']; 
+		$mail->SMTPAuth = true;
+		$mail->Username = $this->mailConfig['username'];
+		$mail->Password = $this->mailConfig['password'];
+		$mail->SMTPSecure = $this->mailConfig['smtpSecure']; 
+		$mail->Port = $this->mailConfig['port'];
+		$mail->setFrom($this->mailConfig['username']);
+		$mail->addAddress($post['email']);
+		
+		$mail->isHTML(true); 
+		$mail->Subject = 'Confirmation activate account'; // Заголовок письма
+		$mail->Body = 'Recovery: '.$_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].'/account/reset/'.$token;
+		
+		$mail->send();
+		/*
+		if(!$mail->send()) {
+			echo ‘Message could not be sent.’;
+			echo ‘Mailer Error: ‘ . $mail->ErrorInfo;
+		} else {
+		echo ‘ok’;
+		}
+		*/
+	}
+	
+	public function reset($token) {
+		$new_password = $this->createPassword();
+		$params = [
+			'token' => $token,
+			'password' => password_hash($new_password, PASSWORD_BCRYPT),
+		];
+		$this->db->query('UPDATE accounts SET status = 1, token = "", password = :password WHERE token = :token', $params);
+		return $new_password;
+	}
+	
+	public function save($post) {
+		$params = [
+			'id' => $_SESSION['account']['id'],
+			'email' => $post['email'],
+			'wallet' => $post['wallet'],
+		];
+		if (!empty($post['password'])) {
+			$params['password'] = password_hash($post['password'], PASSWORD_BCRYPT);
+			$sql = ',password = :password';
+		}
+		//Если поле с паролем пришло пустое - то в запрос параметр пароля не добавляется
+		else {
+			$sql = '';
+		}
+		//Сначала обновляем измененные данные (собранные в $params) в сессии
+		foreach ($params as $key => $val) {
+			$_SESSION['account'][$key] = $val;
+		}
+		//А затем записываем изменения в БД
+		$this->db->query('UPDATE accounts SET email = :email, wallet = :wallet'.$sql.' WHERE id = :id', $params);
+	}
 	
 }

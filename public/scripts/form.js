@@ -17,7 +17,9 @@ $(document).ready(function() {
 				if (json.url) {
 					window.location.href = '/' + json.url;
 				} else {
-					alert(json.status + ' - ' + json.message);
+					//alert(json.status + ' - ' + json.message);
+					$('#alertModal').modal();
+					$('#alert-text').text(json.message);
 				}
 			},
 		});
